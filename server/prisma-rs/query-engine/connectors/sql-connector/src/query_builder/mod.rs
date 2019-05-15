@@ -7,7 +7,7 @@ use connector::{
 };
 use prisma_models::prelude::*;
 use prisma_query::ast::*;
-use related_nodes::RelatedNodesQueryBuilder;
+use related_nodes::*;
 use std::sync::Arc;
 
 pub trait SelectDefinition {
@@ -91,16 +91,17 @@ impl QueryBuilder {
     pub fn get_related_nodes(
         from_field: RelationFieldRef,
         from_node_ids: &[GraphqlId],
+
         query_arguments: QueryArguments,
         selected_fields: &SelectedFields,
     ) -> Select {
         let is_with_pagination = query_arguments.is_with_pagination();
-        let builder = RelatedNodesQueryBuilder::new(from_field, from_node_ids, query_arguments, selected_fields);
+        let base_query = RelatedNodesBaseQuery::new(from_field, from_node_ids, query_arguments, selected_fields);
 
         let select_ast = if is_with_pagination {
-            builder.with_pagination()
+            RelatedNodesWithRowNumber::with_pagination(base_query)
         } else {
-            builder.without_pagination()
+            RelatedNodesWithRowNumber::without_pagination(base_query)
         };
 
         select_ast
